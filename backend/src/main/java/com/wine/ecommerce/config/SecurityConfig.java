@@ -1,10 +1,7 @@
 package com.wine.ecommerce.config;
 
-import com.wine.ecommerce.config.jwt.JwtAuthenticationEntryPoint;
-import com.wine.ecommerce.config.jwt.JwtAuthenticationFilter;
-import com.wine.ecommerce.config.jwt.JwtProperties;
-import com.wine.ecommerce.config.jwt.JwtUtils;
-import com.wine.ecommerce.user.services.CustomUserDetailsService;
+import com.wine.ecommerce.config.jwt.CustomJwtDecoder;
+import com.wine.ecommerce.config.jwt.JwtAuthenticationConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,10 +11,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -25,33 +22,24 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 /**
- * Configuration de sécurité Spring Security 6.x pour l'application Wine E-commerce.
+ * Configuration de sécurité moderne Spring Security 6.5+ avec OAuth2 Resource Server.
  * <p>
  * Features:
- * - JWT Authentication avec filtre personnalisé
+ * - OAuth2 Resource Server natif pour JWT
  * - CORS configuré pour les clients frontend
  * - Autorisation basée sur les rôles (CLIENT, ADMIN, SUPER_ADMIN)
  * - Protection CSRF désactivée pour l'API REST
  * - Sessions stateless pour l'architecture JWT
- * - Headers de sécurité configurés
+ * - Headers de sécurité modernes
+ * - Method Security activée via @EnableMethodSecurity
  */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomUserDetailsService customUserDetailsService;
-    private final JwtUtils jwtUtils;
-    private final JwtProperties jwtProperties;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-
-    /**
-     * Filtre JWT pour l'authentification basée sur les tokens.
-     */
-    @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtUtils, customUserDetailsService, jwtProperties);
-    }
+    private final CustomJwtDecoder customJwtDecoder;
+    private final JwtAuthenticationConverter jwtAuthenticationConverter;
 
     /**
      * Encodeur de mot de passe BCrypt
@@ -101,7 +89,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Chaîne de filtres de sécurité principale pour l'API REST avec authentification JWT.
+     * Chaîne de filtres de sécurité moderne avec OAuth2 Resource Server pour JWT.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -112,8 +100,19 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt
+                                .decoder(customJwtDecoder)
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter)
+                        )
+                        .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
+                        .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
+                )
+                .headers(headers -> headers
+                        .httpStrictTransportSecurity(hstsConfig -> hstsConfig
+                                .maxAgeInSeconds(31536000)
+                                .includeSubDomains(true)
+                        )
                 )
                 .authorizeHttpRequests(authz -> authz
                         // Endpoints d'authentification - accès public
@@ -122,6 +121,9 @@ public class SecurityConfig {
                         // Endpoints utilisateurs - gestion des rôles
                         .requestMatchers("/api/users", "/api/users/*/roles/**", "/api/users/*/status").hasAnyRole("ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/api/users/*/delete").hasRole("SUPER_ADMIN")
+
+                        // Endpoints rôles - accès administrateur
+                        .requestMatchers("/api/roles/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
 
                         // Endpoints commandes admin - accès administrateur
                         .requestMatchers("/api/orders/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
@@ -132,7 +134,6 @@ public class SecurityConfig {
                         // Autres endpoints API - authentification requise
                         .requestMatchers("/api/**").authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
