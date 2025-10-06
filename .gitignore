@@ -1,0 +1,25 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+
+# Build artifacts
+target/
+build/
+
+# Gradle specific
+.gradle/
+
+# Log files
+*.log
+
+
+# Maven specific (if applicable)
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# Claude code
+.claude

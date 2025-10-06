@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: wine-ecommerce-db
+    environment:
+      POSTGRES_DB: wine_ecommerce
+      POSTGRES_USER: wine_user
+      POSTGRES_PASSWORD: wine_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - wine-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wine-ecommerce-backend
+    depends_on:
+      - postgres
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/wine_ecommerce
+      SPRING_DATASOURCE_USERNAME: wine_user
+      SPRING_DATASOURCE_PASSWORD: wine_password
+    ports:
+      - "8080:8080"
+    networks:
+      - wine-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: wine-ecommerce-frontend
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api
+    ports:
+      - "3000:3000"
+    networks:
+      - wine-network
+
+volumes:
+  postgres_data:
+
+networks:
+  wine-network:
+    driver: bridge
