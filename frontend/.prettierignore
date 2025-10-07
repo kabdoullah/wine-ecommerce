@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+
+# Production builds
+.next
+out
+build
+dist
+
+# Environment files
+.env*
+
+# Logs
+*.log
+
+# Temporary files
+.DS_Store
+.vscode
+.idea
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# TypeScript files (auto-generated)
+next-env.d.ts
+
+# Coverage reports
+coverage
+
+# Compiled output
+*.tsbuildinfo

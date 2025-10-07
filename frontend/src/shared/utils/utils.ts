@@ -1,8 +1,8 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export const formatPrice = (priceCents: number, currency = 'EUR'): string => {
@@ -52,15 +52,18 @@ export const getStatusBadgeClass = (status: string): string => {
     ACTIVE: 'bg-green-100 text-green-800',
     INACTIVE: 'bg-red-100 text-red-800',
   };
-  return statusClasses[normalizedStatus as keyof typeof statusClasses] || 'bg-gray-100 text-gray-800';
+  return (
+    statusClasses[normalizedStatus as keyof typeof statusClasses] ||
+    'bg-gray-100 text-gray-800'
+  );
 };
 
 export const generateStarRating = (rating: number): string => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 !== 0;
   const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-  
-  return '★'.repeat(fullStars) + 
-         (hasHalfStar ? '☆' : '') + 
-         '☆'.repeat(emptyStars);
+
+  return (
+    '★'.repeat(fullStars) + (hasHalfStar ? '☆' : '') + '☆'.repeat(emptyStars)
+  );
 };

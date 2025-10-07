@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { ReactQueryProvider } from '@/shared/providers/ReactQueryProvider';
 
 const inter = Inter({
-  subsets: ["latin"],
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "Wine Ecommerce - Vente de vins en ligne",
+  title: 'Wine Ecommerce - Vente de vins en ligne',
   description: "Découvrez notre sélection de vins d'exception",
 };
 
@@ -18,11 +18,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
+    <html lang='fr'>
       <body className={`${inter.className} antialiased`}>
-        <ReactQueryProvider>
-          {children}
-        </ReactQueryProvider>
+        <ReactQueryProvider>{children}</ReactQueryProvider>
       </body>
     </html>
   );
